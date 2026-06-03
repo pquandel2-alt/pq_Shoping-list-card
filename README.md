@@ -1,29 +1,33 @@
-# Shopping List Card
+# 🛒 Shopping List Card
 
-Eine Custom Lovelace Card für Home Assistant die deine Einkaufsliste automatisch nach Kategorien sortiert. Gebaut im Glasmorphism-Stil.
+Eine Custom Lovelace Card für Home Assistant, die deine Einkaufsliste **automatisch nach Kategorien sortiert** – im modernen Glasmorphism-Stil mit vier wählbaren Designs.
 
-## Features
+Funktioniert mit jeder `todo`-Entität (Bring!, lokale To-do-Listen etc.) und bleibt vollständig mit der jeweiligen App synchron.
 
-- Automatische Sortierung nach Kategorie (Obst & Gemüse, Molkerei, Backwaren, Fleisch & Fisch, Getränke, Tiefkühl, Vorrat, Haushalt, Sonstiges)
-- Artikel direkt in der Card hinzufügen
-- Artikel per Tipp abhaken (wird als “completed” markiert)
-- Glasmorphism Design passend zu Liquid Glass / Frosted Glass Themes
-- Funktioniert mit jeder `todo` Entität (Bring!, lokale Listen etc.)
-- Mengenangaben werden bei der Kategorisierung ignoriert (z.B. “2x Milch” → Molkerei)
+## ✨ Features
 
-## Installation
+- **Automatische Kategorie-Sortierung** – über 600 deutsche Produkte sind hinterlegt und werden den passenden Kategorien zugeordnet
+- **Artikel hinzufügen** direkt in der Card per Eingabefeld
+- **Abhaken per Tipp** – erledigte Artikel wandern nach unten und werden durchgestrichen
+- **Erledigte löschen** – ein Button entfernt alle erledigten Artikel auf einmal
+- **Wiederherstellen** – versehentlich abgehakte Artikel per Tipp auf den Haken zurückholen
+- **4 Designs** – Glas, Klassisch, Dunkel, Minimalistisch
+- **Visueller Editor** – Liste und Design bequem per Dropdown wählen, kein YAML nötig
+- **Mengenangaben werden ignoriert** – „2x Milch" landet korrekt unter Molkerei
 
-### Über HACS (empfohlen)
+## 📦 Installation
 
-1. HACS → Frontend → ⋮ → Custom Repositories
-1. URL: `https://github.com/DEIN-USERNAME/shopping-list-card`
-1. Kategorie: `Lovelace`
-1. Download → HA neu laden
+### Über HACS (Custom Repository)
+
+1. HACS → Frontend → ⋮ (drei Punkte oben rechts) → **Custom Repositories**
+2. URL: `https://github.com/pquandel2-alt/Shoping-list-card-`
+3. Kategorie: **Lovelace**
+4. Hinzufügen → **Herunterladen** → Browser neu laden
 
 ### Manuell
 
 1. `shopping-list-card.js` nach `/config/www/` kopieren
-1. In `configuration.yaml` unter `lovelace > resources` eintragen:
+2. In `configuration.yaml` eintragen:
 
 ```yaml
 lovelace:
@@ -32,27 +36,57 @@ lovelace:
       type: module
 ```
 
-## Verwendung
+## 🚀 Verwendung
+
+Am einfachsten über den **visuellen Editor**: Card hinzufügen → „Shopping List Card" auswählen → Liste und Design per Dropdown einstellen.
+
+Oder per YAML:
 
 ```yaml
 type: custom:shopping-list-card
 entity: todo.zuhause
+theme: glass
 ```
 
-## Eigene Produkte ergänzen
+## ⚙️ Konfiguration
 
-In der Datei `shopping-list-card.js` findest du die `_getCategory()` Methode. Dort kannst du neue Produkte zu bestehenden Kategorien hinzufügen oder neue Kategorien anlegen.
+| Option | Typ | Standard | Beschreibung |
+|--------|-----|----------|--------------|
+| `entity` | string | `todo.zuhause` | Die anzuzeigende To-do-/Einkaufsliste |
+| `theme` | string | `glass` | Design: `glass`, `classic`, `dark` oder `minimal` |
 
-## Kategorien
+## 🎨 Designs
 
-|Kategorie      |Icon|Beispiele                   |
-|---------------|----|----------------------------|
-|Obst & Gemüse  |🥦   |Äpfel, Tomaten, Spinat      |
-|Molkerei       |🥛   |Milch, Butter, Joghurt      |
-|Backwaren      |🍞   |Brot, Brötchen, Toast       |
-|Fleisch & Fisch|🥩   |Hähnchen, Lachs, Wurst      |
-|Getränke       |🥤   |Wasser, Saft, Bier          |
-|Tiefkühl       |🧊   |Pizza, Erbsen TK, Eis       |
-|Vorrat         |🥫   |Nudeln, Reis, Öl            |
-|Haushalt       |🧹   |Spülmittel, Toilettenpapier |
-|Sonstiges      |📦   |Alles was nicht erkannt wird|
+| Theme | Beschreibung |
+|-------|--------------|
+| `glass` | Glasmorphism – transparent mit Blur, passt zu Liquid/Frosted Glass Themes |
+| `classic` | Klassisches Home Assistant Design über die HA CSS-Variablen |
+| `dark` | Dunkles, kräftiges Design |
+| `minimal` | Minimalistisch – ohne Hintergrund, nur dezente Linien |
+
+## 🗂 Kategorien
+
+| Kategorie | Icon | Beispiele |
+|-----------|------|-----------|
+| Obst & Gemüse | 🥦 | Äpfel, Tomaten, Spinat, Kürbis, Kräuter |
+| Molkerei | 🥛 | Milch, Butter, Joghurt, Käse, Skyr |
+| Backwaren | 🍞 | Brot, Brötchen, Toast, Mehl, Hefe |
+| Fleisch & Fisch | 🥩 | Hähnchen, Lachs, Wurst, Frikadellen |
+| Getränke | 🥤 | Wasser, Saft, Bier, Kaffee, Schorle |
+| Tiefkühl | 🧊 | Pizza, Pommes, Eis, Rahmspinat |
+| Vorrat | 🥫 | Nudeln, Reis, Öl, Gewürze, Konserven |
+| Haushalt | 🧹 | Spülmittel, Toilettenpapier, Batterien, Tierfutter |
+| Sonstiges | 📦 | Alles was nicht automatisch erkannt wird |
+
+## 🔧 Eigene Produkte ergänzen
+
+In `shopping-list-card.js` findest du die Methode `_getCategory()`. Dort kannst du in den jeweiligen Kategorie-Listen weitere Produkte ergänzen oder neue Kategorien anlegen. Die Zuordnung ist nicht case-sensitiv und ignoriert vorangestellte Mengenangaben.
+
+## ℹ️ Hinweise
+
+- Die Kategorisierung basiert auf einer eigenen Wortliste, **nicht** auf den Kategorien der Bring!-App – diese werden von Home Assistant nicht bereitgestellt.
+- Unbekannte Artikel landen automatisch unter „Sonstiges".
+
+## 📄 Lizenz
+
+MIT

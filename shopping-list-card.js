@@ -1,3 +1,4 @@
+// @ts-check
 // Shopping List Card v2.0.0
 class ShoppingListCard extends HTMLElement {
   constructor() {
@@ -16,12 +17,14 @@ class ShoppingListCard extends HTMLElement {
     this._theme = 'glass';
   }
 
+  /** @param {LovelaceCardConfig} config */
   setConfig(config) {
     this._config = config || {};
     this._entity = config.entity || 'todo.zuhause';
     this._theme  = config.theme  || 'glass';
   }
 
+  /** @param {HomeAssistant} hass */
   set hass(hass) {
     this._hass = hass;
     const entityState = hass.states[this._entity];
@@ -745,45 +748,45 @@ class ShoppingListCard extends HTMLElement {
       </ha-card>
     `;
 
-    const input     = this.shadowRoot.getElementById('newItem');
-    const qtyInput  = this.shadowRoot.getElementById('newQty');
-    const unitSelect = this.shadowRoot.getElementById('newUnit');
+    const input     = /** @type {HTMLInputElement|null} */ (this.shadowRoot.getElementById('newItem'));
+    const qtyInput  = /** @type {HTMLInputElement|null} */ (this.shadowRoot.getElementById('newQty'));
+    const unitSelect = /** @type {HTMLInputElement|null} */ (this.shadowRoot.getElementById('newUnit'));
     const addBtn    = this.shadowRoot.getElementById('addBtn');
 
     const doAdd = () => this._addItem(input.value, qtyInput.value, unitSelect.value);
 
     if (addBtn)   addBtn.addEventListener('click', doAdd);
     if (input) {
-      input.addEventListener('keydown', e => { if (e.key === 'Enter') doAdd(); });
-      input.addEventListener('input',   e => { this._inputValue = e.target.value; });
+      input.addEventListener('keydown', e => { if ((/** @type {KeyboardEvent} */ (e)).key === 'Enter') doAdd(); });
+      input.addEventListener('input',   e => { this._inputValue = (/** @type {HTMLInputElement} */ (e.target)).value; });
     }
-    if (qtyInput)   qtyInput.addEventListener('input',    e => { this._qtyValue   = e.target.value; });
-    if (unitSelect) unitSelect.addEventListener('change', e => { this._unitValue  = e.target.value; });
+    if (qtyInput)   qtyInput.addEventListener('input',    e => { this._qtyValue   = (/** @type {HTMLInputElement} */ (e.target)).value; });
+    if (unitSelect) unitSelect.addEventListener('change', e => { this._unitValue  = (/** @type {HTMLInputElement} */ (e.target)).value; });
 
     const deleteBtn = this.shadowRoot.getElementById('deleteCompleted');
     if (deleteBtn) deleteBtn.addEventListener('click', () => this._deleteCompleted());
 
     this.shadowRoot.querySelectorAll('.item-check').forEach(el => {
       el.addEventListener('click', () => {
-        if (el.dataset.action === 'complete') this._completeItem(el.dataset.uid);
-        else this._uncompleteItem(el.dataset.uid);
+        if ((/** @type {HTMLElement} */ (el)).dataset.action === 'complete') this._completeItem((/** @type {HTMLElement} */ (el)).dataset.uid);
+        else this._uncompleteItem((/** @type {HTMLElement} */ (el)).dataset.uid);
       });
     });
 
     this.shadowRoot.querySelectorAll('.edit-pen').forEach(btn => {
-      btn.addEventListener('click', () => this._startEdit(btn.dataset.uid, btn.dataset.desc));
+      btn.addEventListener('click', () => this._startEdit((/** @type {HTMLElement} */ (btn)).dataset.uid, (/** @type {HTMLElement} */ (btn)).dataset.desc));
     });
     this.shadowRoot.querySelectorAll('.edit-save').forEach(btn => {
-      btn.addEventListener('click', () => this._saveEdit(btn.dataset.uid));
+      btn.addEventListener('click', () => this._saveEdit((/** @type {HTMLElement} */ (btn)).dataset.uid));
     });
     this.shadowRoot.querySelectorAll('.edit-cancel').forEach(btn => {
       btn.addEventListener('click', () => this._cancelEdit());
     });
     this.shadowRoot.querySelectorAll('.edit-qty').forEach(input => {
-      input.addEventListener('input', e => { this._editQty = e.target.value; });
+      input.addEventListener('input', e => { this._editQty = (/** @type {HTMLInputElement} */ (e.target)).value; });
     });
     this.shadowRoot.querySelectorAll('.edit-unit').forEach(sel => {
-      sel.addEventListener('change', e => { this._editUnit = e.target.value; });
+      sel.addEventListener('change', e => { this._editUnit = (/** @type {HTMLInputElement} */ (e.target)).value; });
     });
   }
 
@@ -814,11 +817,13 @@ class ShoppingListCardEditor extends HTMLElement {
     this._config = {};
   }
 
+  /** @param {LovelaceCardConfig} config */
   setConfig(config) {
     this._config = { ...config };
     this._render();
   }
 
+  /** @param {HomeAssistant} hass */
   set hass(hass) {
     this._hass = hass;
     if (!this._rendered) this._render();
@@ -921,15 +926,15 @@ class ShoppingListCardEditor extends HTMLElement {
     const entitySelect = this.shadowRoot.getElementById('entitySelect');
     const themeSelect  = this.shadowRoot.getElementById('themeSelect');
 
-    entitySelect.addEventListener('change', e => this._emitChange('entity', e.target.value));
+    entitySelect.addEventListener('change', e => this._emitChange('entity', (/** @type {HTMLInputElement} */ (e.target)).value));
     themeSelect.addEventListener('change',  e => {
-      this._emitChange('theme', e.target.value);
+      this._emitChange('theme', (/** @type {HTMLInputElement} */ (e.target)).value);
       this._render();
     });
 
     this.shadowRoot.querySelectorAll('.preview-chip').forEach(chip => {
       chip.addEventListener('click', () => {
-        this._emitChange('theme', chip.dataset.theme);
+        this._emitChange('theme', (/** @type {HTMLElement} */ (chip)).dataset.theme);
         this._render();
       });
     });

@@ -1,3 +1,4 @@
+// Shopping List Card v2.0.0
 class ShoppingListCard extends HTMLElement {
   constructor() {
     super();
@@ -5,6 +6,11 @@ class ShoppingListCard extends HTMLElement {
     this._items = [];
     this._loading = true;
     this._inputValue = '';
+    this._qtyValue = '';
+    this._unitValue = '–';
+    this._editingUid = null;
+    this._editQty = '';
+    this._editUnit = '–';
     this._lastState = null;
     this._entity = 'todo.zuhause';
     this._theme = 'glass';
@@ -66,19 +72,25 @@ class ShoppingListCard extends HTMLElement {
           background: rgba(255,255,255,0.08);
           border: 1px solid rgba(255,255,255,0.12);
         }
-        .input-field {
+        .input-field, .input-qty, .input-unit {
           background: rgba(255,255,255,0.08);
           border: 1px solid rgba(255,255,255,0.15);
           color: white;
         }
-        .input-field::placeholder { color: rgba(255,255,255,0.3); }
-        .input-field:focus { border-color: rgba(255,255,255,0.4); }
+        .input-field::placeholder, .input-qty::placeholder { color: rgba(255,255,255,0.3); }
+        .input-field:focus, .input-qty:focus, .input-unit:focus { border-color: rgba(255,255,255,0.4); }
+        .input-unit option { background: #1a1a2e; color: white; }
         .add-btn {
           background: rgba(255,255,255,0.1);
           border: 1px solid rgba(255,255,255,0.2);
           color: white;
         }
         .add-btn:hover { background: rgba(255,255,255,0.2); }
+        .qty-badge {
+          background: rgba(255,255,255,0.1);
+          border: 1px solid rgba(255,255,255,0.15);
+          color: rgba(255,255,255,0.65);
+        }
         .cat-name { color: rgba(255,255,255,0.45); }
         .cat-count { color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.07); }
         .category-items { border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; }
@@ -100,6 +112,10 @@ class ShoppingListCard extends HTMLElement {
         .done-check:hover { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.1); color: white; }
         .done-name { text-decoration: line-through; color: rgba(255,255,255,0.4); }
         .loading, .empty { color: rgba(255,255,255,0.4); }
+        .edit-pen { color: rgba(255,255,255,0.5); }
+        .edit-pen:hover { color: rgba(255,255,255,0.9); }
+        .edit-save { background: rgba(76,175,80,0.2); border: 1px solid rgba(76,175,80,0.45); color: rgba(76,175,80,0.95); }
+        .edit-cancel { background: rgba(244,67,54,0.1); border: 1px solid rgba(244,67,54,0.35); color: rgba(244,67,54,0.85); }
       `,
 
       // Klassisches HA
@@ -118,19 +134,24 @@ class ShoppingListCard extends HTMLElement {
           background: var(--secondary-background-color, #f5f5f5);
           border: 1px solid var(--divider-color, #e0e0e0);
         }
-        .input-field {
+        .input-field, .input-qty, .input-unit {
           background: var(--secondary-background-color, #f5f5f5);
           border: 1px solid var(--divider-color, #e0e0e0);
           color: var(--primary-text-color, #212121);
         }
-        .input-field::placeholder { color: var(--secondary-text-color, #727272); }
-        .input-field:focus { border-color: var(--primary-color, #03a9f4); }
+        .input-field::placeholder, .input-qty::placeholder { color: var(--secondary-text-color, #727272); }
+        .input-field:focus, .input-qty:focus, .input-unit:focus { border-color: var(--primary-color, #03a9f4); }
         .add-btn {
           background: var(--primary-color, #03a9f4);
           border: none;
           color: white;
         }
         .add-btn:hover { opacity: 0.85; }
+        .qty-badge {
+          background: var(--secondary-background-color, #f5f5f5);
+          border: 1px solid var(--divider-color, #e0e0e0);
+          color: var(--secondary-text-color, #727272);
+        }
         .cat-name { color: var(--secondary-text-color, #727272); }
         .cat-count { color: var(--secondary-text-color, #727272); background: var(--secondary-background-color, #f5f5f5); }
         .category-items { border: 1px solid var(--divider-color, #e0e0e0); border-radius: 8px; }
@@ -151,6 +172,10 @@ class ShoppingListCard extends HTMLElement {
         .done-check { border-color: #4caf50; background: rgba(76,175,80,0.1); color: #4caf50; }
         .done-name { text-decoration: line-through; color: var(--secondary-text-color, #727272); }
         .loading, .empty { color: var(--secondary-text-color, #727272); }
+        .edit-pen { color: var(--secondary-text-color, #9e9e9e); }
+        .edit-pen:hover { color: var(--primary-text-color, #212121); }
+        .edit-save { background: rgba(76,175,80,0.1); border: 1px solid #4caf50; color: #388e3c; }
+        .edit-cancel { background: rgba(244,67,54,0.08); border: 1px solid #f44336; color: #d32f2f; }
       `,
 
       // Dark
@@ -169,19 +194,25 @@ class ShoppingListCard extends HTMLElement {
           background: rgba(255,255,255,0.06);
           border: 1px solid rgba(255,255,255,0.1);
         }
-        .input-field {
+        .input-field, .input-qty, .input-unit {
           background: rgba(255,255,255,0.05);
           border: 1px solid rgba(255,255,255,0.1);
           color: white;
         }
-        .input-field::placeholder { color: rgba(255,255,255,0.25); }
-        .input-field:focus { border-color: rgba(99,102,241,0.8); }
+        .input-field::placeholder, .input-qty::placeholder { color: rgba(255,255,255,0.25); }
+        .input-field:focus, .input-qty:focus, .input-unit:focus { border-color: rgba(99,102,241,0.8); }
+        .input-unit option { background: #1a1a2e; color: white; }
         .add-btn {
           background: rgba(99,102,241,0.3);
           border: 1px solid rgba(99,102,241,0.5);
           color: white;
         }
         .add-btn:hover { background: rgba(99,102,241,0.5); }
+        .qty-badge {
+          background: rgba(99,102,241,0.15);
+          border: 1px solid rgba(99,102,241,0.3);
+          color: rgba(255,255,255,0.65);
+        }
         .cat-name { color: rgba(255,255,255,0.4); }
         .cat-count { color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.05); }
         .category-items { border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; background: rgba(0,0,0,0.2); }
@@ -203,6 +234,10 @@ class ShoppingListCard extends HTMLElement {
         .done-check:hover { border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.08); }
         .done-name { text-decoration: line-through; color: rgba(255,255,255,0.3); }
         .loading, .empty { color: rgba(255,255,255,0.35); }
+        .edit-pen { color: rgba(99,102,241,0.5); }
+        .edit-pen:hover { color: rgba(99,102,241,0.95); }
+        .edit-save { background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.4); color: rgba(76,175,80,0.9); }
+        .edit-cancel { background: rgba(244,67,54,0.1); border: 1px solid rgba(244,67,54,0.35); color: rgba(244,67,54,0.8); }
       `,
 
       // Minimal
@@ -221,7 +256,7 @@ class ShoppingListCard extends HTMLElement {
           background: transparent;
           border: 1px solid var(--divider-color, #e0e0e0);
         }
-        .input-field {
+        .input-field, .input-qty {
           background: transparent;
           border: none;
           border-bottom: 1px solid var(--divider-color, #e0e0e0);
@@ -229,14 +264,27 @@ class ShoppingListCard extends HTMLElement {
           color: var(--primary-text-color, #212121);
           padding: 6px 0;
         }
-        .input-field::placeholder { color: var(--secondary-text-color, #727272); }
-        .input-field:focus { border-bottom-color: var(--primary-color, #03a9f4); }
+        .input-unit {
+          background: transparent;
+          border: none;
+          border-bottom: 1px solid var(--divider-color, #e0e0e0);
+          border-radius: 0;
+          color: var(--primary-text-color, #212121);
+          padding: 6px 2px;
+        }
+        .input-field::placeholder, .input-qty::placeholder { color: var(--secondary-text-color, #727272); }
+        .input-field:focus, .input-qty:focus { border-bottom-color: var(--primary-color, #03a9f4); }
         .add-btn {
           background: transparent;
           border: none;
           color: var(--primary-color, #03a9f4);
           font-size: 24px;
           padding: 0 8px;
+        }
+        .qty-badge {
+          background: transparent;
+          border: 1px solid var(--divider-color, #e0e0e0);
+          color: var(--secondary-text-color, #727272);
         }
         .cat-name { color: var(--secondary-text-color, #727272); letter-spacing: 1px; }
         .cat-count { color: var(--secondary-text-color, #727272); background: transparent; border: none; }
@@ -259,6 +307,10 @@ class ShoppingListCard extends HTMLElement {
         .done-check { border-color: #4caf50; background: transparent; color: #4caf50; border-radius: 4px; }
         .done-name { text-decoration: line-through; color: var(--secondary-text-color, #727272); }
         .loading, .empty { color: var(--secondary-text-color, #727272); }
+        .edit-pen { color: var(--secondary-text-color, #9e9e9e); }
+        .edit-pen:hover { color: var(--primary-color, #03a9f4); }
+        .edit-save { background: transparent; border: none; color: #4caf50; }
+        .edit-cancel { background: transparent; border: none; color: #f44336; }
       `,
     };
 
@@ -266,55 +318,27 @@ class ShoppingListCard extends HTMLElement {
   }
 
   // -------------------------------------------------------
+  // Keyword-Matching: Wortgrenzen für kurze Keywords (≤3 Zeichen)
+  // verhindert False Positives in zusammengesetzten Wörtern
+  // -------------------------------------------------------
+  _matchesKeyword(text, keyword) {
+    if (keyword.length <= 3) {
+      const esc = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return new RegExp(`(?<![a-zäöüß])${esc}(?![a-zäöüß])`, 'i').test(text);
+    }
+    return text.includes(keyword);
+  }
+
+  // -------------------------------------------------------
   // Kategorie-Zuordnung
+  // Priorität: Fleisch → Molkerei → Backwaren → Getränke →
+  //            Haushalt → Vorrat → Obst&Gemüse → Tiefkühl → Sonstiges
   // -------------------------------------------------------
   _getCategory(itemName) {
     const name  = itemName.toLowerCase().trim();
     const clean = name.replace(/^\d+[\s]*[xXgGkKlLmM]+[\s]*/i, '').trim();
 
     const categories = {
-      'Obst & Gemüse': [
-        'apfel','äpfel','birne','birnen','banane','bananen','orange','orangen',
-        'zitrone','zitronen','limette','limetten','erdbeere','erdbeeren','traube',
-        'trauben','tomate','tomaten','cherrytomate','gurke','gurken','paprika',
-        'karotte','karotten','möhre','möhren','zwiebel','zwiebeln','frühlingszwiebel',
-        'knoblauch','salat','kopfsalat','eisbergsalat','spinat','brokkoli','blumenkohl',
-        'zucchini','aubergine','lauch','porree','sellerie','avocado','mango','ananas',
-        'kiwi','pfirsich','nektarine','aprikose','aprikosen','pflaume','pflaumen',
-        'kirsche','kirschen','heidelbeere','heidelbeeren','himbeere','himbeeren',
-        'brombeere','brombeeren','johannisbeere','melone','wassermelone','honigmelone',
-        'champignon','champignons','pilze','pilz','kartoffel','kartoffeln',
-        'süßkartoffel','feldsalat','rucola','petersilie','basilikum','schnittlauch',
-        'koriander','dill','minze','rosmarin','thymian','ingwer','chili','radieschen',
-        'rettich','rote bete','rote beete','kürbis','mais','erbsen','bohnen grün',
-        'spargel','fenchel','kohlrabi','rosenkohl','grünkohl','weißkohl','rotkohl',
-        'chinakohl','pak choi','staudensellerie','pastinake','rote zwiebel',
-        'schalotte','schalotten','knollensellerie','endivie','mangold','artischocke',
-        'granatapfel','feige','feigen','dattel','datteln','clementine','clementinen',
-        'mandarine','mandarinen','grapefruit','pomelo','papaya','maracuja','litschi',
-        'physalis','sprossen','keimlinge','kresse','olive','oliven',
-      ],
-      'Molkerei': [
-        'milch','vollmilch','frischmilch','hafermilch','sojamilch','mandelmilch',
-        'butter','sahne','schlagsahne','kaffeesahne','joghurt','naturjoghurt',
-        'griechischer joghurt','quark','speisequark','käse','parmesan','mozzarella',
-        'gouda','frischkäse','schmand','crème fraîche','creme fraiche','ei','eier',
-        'margarine','kefir','buttermilch','skyr','mascarpone','ricotta','brie',
-        'camembert','emmentaler','feta','harzer','bergkäse','butterkäse','hüttenkäse',
-        'körniger frischkäse','schnittkäse','reibekäse','raclette','halloumi',
-        'ziegenkäse','schafskäse','crème double','pflanzendrink','kokosjoghurt',
-        'pudding','sahnequark','milchreis','vanillesoße',
-      ],
-      'Backwaren': [
-        'brot','brötchen','semmel','toast','toastbrot','baguette','laugenstange',
-        'laugenbrezel','croissant','brezel','mehl','weizenmehl','dinkelmehl','hefe',
-        'trockenhefe','backpulver','natron','kuchen','torte','muffin','bagel','wrap',
-        'tortilla','weißbrot','vollkornbrot','graubrot','roggenbrot','dinkelbrot',
-        'ciabatta','focaccia','knäckebrot','zwieback','pumpernickel','milchbrötchen',
-        'rosinenbrötchen','franzbrötchen','donut','berliner','krapfen','plätzchen',
-        'lebkuchen','waffeln','pfannkuchen','crêpe','sandwich','burger buns','pita',
-        'naan','vanillezucker','puderzucker','marzipan','kuvertüre','backaroma',
-      ],
       'Fleisch & Fisch': [
         'hackfleisch','hack','hähnchen','hähnchenbrust','hühnchen','rind','rindfleisch',
         'schwein','schweinefleisch','steak','rumpsteak','schnitzel','wurst','würstchen',
@@ -326,32 +350,77 @@ class ShoppingListCard extends HTMLElement {
         'lammfleisch','lamm','ente','gans','kalbfleisch','kalb','leberkäse','aufschnitt',
         'mett','sülze','blutwurst','krakauer','nackensteak','filet','rinderfilet',
         'schweinefilet','hähnchenschenkel','chicken wings','garnele','tintenfisch',
-        'pangasius','dorade','sardinen','surimi','fischstäbchen',
+        'pangasius','dorade','sardinen','surimi','fischstäbchen','schlemmerfilet',
+        'fischfilet','lachsfilet','thunfischdose','thunfisch dose',
+      ],
+      'Molkerei': [
+        'milch','vollmilch','frischmilch','hafermilch','sojamilch','mandelmilch',
+        'butter','sahne','schlagsahne','kaffeesahne','joghurt','naturjoghurt',
+        'griechischer joghurt','quark','speisequark','käse','parmesan','mozzarella',
+        'gouda','frischkäse','schmand','crème fraîche','creme fraiche','eier',
+        'margarine','kefir','buttermilch','skyr','mascarpone','ricotta','brie',
+        'camembert','emmentaler','feta','harzer','bergkäse','butterkäse','hüttenkäse',
+        'körniger frischkäse','schnittkäse','reibekäse','raclette','halloumi',
+        'ziegenkäse','schafskäse','crème double','pflanzendrink','kokosjoghurt',
+        'sahnequark','milchreis','vanillesoße','sour cream','sauerrahm',
+        'ayran','lassi','kondensmilch','cremefine','kaffeeobers','schlagobers',
+      ],
+      'Backwaren': [
+        'brot','brötchen','semmel','toast','toastbrot','baguette','laugenstange',
+        'laugenbrezel','croissant','brezel','mehl','weizenmehl','dinkelmehl','hefe',
+        'trockenhefe','backpulver','natron','kuchen','torte','muffin','bagel','wrap',
+        'tortilla','weißbrot','vollkornbrot','graubrot','roggenbrot','dinkelbrot',
+        'ciabatta','focaccia','knäckebrot','zwieback','pumpernickel','milchbrötchen',
+        'rosinenbrötchen','franzbrötchen','donut','berliner','krapfen','plätzchen',
+        'lebkuchen','waffeln','pfannkuchen','crêpe','sandwich','burger buns','pita',
+        'naan','vanillezucker','puderzucker','marzipan','kuvertüre','backaroma',
+        'laugengebäck','sonntagsbrötchen','brezeln','hefezopf',
       ],
       'Getränke': [
-        'wasser','mineralwasser','stilles wasser','sprudel','sprudelwasser','saft',
-        'orangensaft','apfelsaft','traubensaft','multivitaminsaft','cola','fanta',
-        'sprite','limonade','spezi','bier','pils','weizenbier','radler','wein',
-        'rotwein','weißwein','rosé','sekt','prosecco','champagner','kaffee',
-        'kaffeebohnen','filterkaffee','tee','grüner tee','schwarzer tee','kräutertee',
-        'smoothie','nektar','eistee','energy','energydrink','espresso','cappuccino',
-        'kakao','trinkschokolade','multivitamin','schorle','apfelschorle','tonic',
-        'ginger ale','sirup','wasser sprudel','vitaminwasser','iso','gin','wodka',
-        'rum','whisky','likör','aperol','prosek','milchkaffee','latte',
+        'wasser','mineralwasser','stilles wasser','sprudel','sprudelwasser',
+        'leitungswasser','tafelwasser',
+        'orangensaft','apfelsaft','traubensaft','multivitaminsaft','saft',
+        'cola','fanta','sprite','limonade','spezi','brause',
+        'bier','pils','weizenbier','radler','malzbier',
+        'wein','rotwein','weißwein','rosé','sekt','prosecco','champagner',
+        'kaffee','kaffeebohnen','filterkaffee','espresso','cappuccino','milchkaffee','latte',
+        'tee','grüner tee','schwarzer tee','kräutertee',
+        'smoothie','nektar','eistee','energy','energydrink',
+        'kakao','trinkschokolade','multivitamin','schorle','apfelschorle',
+        'tonic','ginger ale','vitaminwasser','gin','wodka','rum','whisky','likör','aperol',
       ],
-      'Tiefkühl': [
-        'tiefkühl','tk','tk-','erbsen tk','spinat tk','pizza','tiefkühlpizza','pommes',
-        'fischstäbchen','eis','eiscreme','sorbet','tiefgefroren','tiefkühlgemüse',
-        'rahmspinat','blätterteig','beerenmischung','tk-beeren','tk-obst','baguette tk',
-        'frühlingsrollen','chicken nuggets','gemüsemischung','kräuterbutter',
-        'eis am stiel','magnum','cornetto','tiefkühlkost',
+      'Haushalt': [
+        'spülmittel','waschmittel','colorwaschmittel','vollwaschmittel','toilettenpapier',
+        'klopapier','küchenrolle','küchentücher','müllbeutel','mülltüten',
+        'geschirrspültabs','spülmaschinentabs','klarspüler','spülmaschinensalz',
+        'reiniger','allzweckreiniger','seife','handseife','flüssigseife','shampoo',
+        'duschgel','zahnpasta','deodorant','wattepads','rasierer','rasierklingen',
+        'rasierschaum','schwamm','spülschwamm','putzmittel','spülbürste','alufolie',
+        'frischhaltefolie','backpapier','butterbrotpapier','zipbeutel','gefrierbeutel',
+        'wattestäbchen','feuchttücher','taschentücher','kosmetiktücher','lappen',
+        'mikrofasertuch','weichspüler','entkalker','fleckenentferner','glasreiniger',
+        'badreiniger','wc-reiniger','klobürste','bodylotion','bodymilk','lotion',
+        'handcreme','gesichtscreme','zahnbürste','zahnseide','mundspülung',
+        'haarspülung','conditioner','haargel','haarspray','sonnencreme','windeln',
+        'damenbinden','tampons','batterien','glühbirne','kerzen',
+        'streichhölzer','feuerzeug','staubsaugerbeutel','wäscheparfüm','essigreiniger',
+        'scheuermilch','desinfektionsmittel','handdesinfektion',
+        'hundefutter','katzenfutter','katzenstreu','blumenerde','vogelfutter',
+        'spülhandschuhe','putztücher','schwammtuch','geschirrtuch','servietten',
+        'grillkohle','deo',
       ],
       'Vorrat': [
+        // Zusammengesetzte Formen zuerst – verhindert False Positives in Obst&Gemüse
+        'tomatensoße','tomatensauce','tomatensuppe','tomatencremesuppe',
+        'kartoffelsuppe','kartoffelpüree','kartoffelknödel','kartoffelklöße','kartoffelgratin',
+        'hühnersuppe','linsensuppe','erbsensuppe','gemüsesuppe','nudelsuppe',
+        'pflanzenöl','speiseöl','frittieröl',
+        // Reguläre Vorrats-Keywords
         'nudeln','pasta','spaghetti','penne','fusilli','makkaroni','lasagne',
         'tortellini','gnocchi','reis','basmatireis','jasminreis','risottoreis',
         'couscous','linsen','rote linsen','bohnen','kidneybohnen','kichererbsen',
         'dosentomaten','passierte tomaten','tomatenmark','olivenöl','sonnenblumenöl',
-        'rapsöl','kokosöl','öl','essig','balsamico','salz','pfeffer','zucker',
+        'rapsöl','kokosöl','essig','balsamico','salz','pfeffer','zucker',
         'brauner zucker','honig','agavendicksaft','marmelade','konfitüre','nutella',
         'nuss-nougat-creme','erdnussbutter','müsli','granola','haferflocken',
         'cornflakes','porridge','chips','tortilla chips','nüsse','erdnüsse','mandeln',
@@ -363,33 +432,47 @@ class ShoppingListCard extends HTMLElement {
         'bulgur','polenta','paniermehl','semmelbrösel','speisestärke','vanille',
         'kakaopulver','pudding','puddingpulver','tortenguss','gelatine','reiswaffeln',
         'knabberzeug','popcorn','marshmallows','gummibärchen','bonbons','riegel',
-        'honig glas','sirup','ahornsirup','dosenmais','dosenananas','sauerkraut',
+        'ahornsirup','dosenmais','dosenananas','sauerkraut',
         'gewürzgurken','oliven glas','antipasti','kapern','tahin','hummus',
+        'wok sauce','sojasauce','fischsauce','oystersauce','currypaste',
       ],
-      'Haushalt': [
-        'spülmittel','waschmittel','colorwaschmittel','vollwaschmittel','toilettenpapier',
-        'klopapier','küchenrolle','küchentücher','müllbeutel','mülltüten',
-        'geschirrspültabs','spülmaschinentabs','klarspüler','spülmaschinensalz',
-        'reiniger','allzweckreiniger','seife','handseife','flüssigseife','shampoo',
-        'duschgel','zahnpasta','deo','deodorant','wattepads','rasierer','rasierklingen',
-        'rasierschaum','schwamm','spülschwamm','putzmittel','spülbürste','alufolie',
-        'frischhaltefolie','backpapier','butterbrotpapier','zipbeutel','gefrierbeutel',
-        'wattestäbchen','feuchttücher','taschentücher','kosmetiktücher','lappen',
-        'mikrofasertuch','weichspüler','entkalker','fleckenentferner','glasreiniger',
-        'badreiniger','wc-reiniger','klobürste','tabs','bodylotion','bodymilk','lotion',
-        'creme','handcreme','gesichtscreme','zahnbürste','zahnseide','mundspülung',
-        'haarspülung','conditioner','haargel','haarspray','sonnencreme','windeln',
-        'feuchttücher baby','damenbinden','tampons','batterien','glühbirne','kerzen',
-        'streichhölzer','feuerzeug','staubsaugerbeutel','wäscheparfüm','essigreiniger',
-        'scheuermilch','desinfektionsmittel','handdesinfektion','hundefutter',
-        'katzenfutter','katzenstreu','blumenerde','vogelfutter','spülhandschuhe',
-        'putztücher','schwammtuch','geschirrtuch','servietten','grillkohle','klemmen',
+      'Obst & Gemüse': [
+        'apfel','äpfel','birne','birnen','banane','bananen','orange','orangen',
+        'zitrone','zitronen','limette','limetten','erdbeere','erdbeeren','traube',
+        'trauben','tomate','tomaten','cherrytomate','gurke','gurken','paprika',
+        'karotte','karotten','möhre','möhren','zwiebel','zwiebeln','frühlingszwiebel',
+        'knoblauch','salat','kopfsalat','eisbergsalat','spinat','brokkoli','blumenkohl',
+        'zucchini','aubergine','lauch','porree','sellerie','avocado','mango','ananas',
+        'kiwi','pfirsich','nektarine','aprikose','aprikosen','pflaume','pflaumen',
+        'kirsche','kirschen','heidelbeere','heidelbeeren','himbeere','himbeeren',
+        'brombeere','brombeeren','johannisbeere','melone','wassermelone','honigmelone',
+        'blaubeere','blaubeeren','pfifferling','pfifferlinge','steinpilz','steinpilze',
+        'marone','maronen','austernpilz','austernpilze','zuckererbsen',
+        'champignon','champignons','pilze','pilz','kartoffel','kartoffeln',
+        'süßkartoffel','feldsalat','rucola','petersilie','basilikum','schnittlauch',
+        'koriander','dill','minze','rosmarin','thymian','ingwer','chili','radieschen',
+        'rettich','rote bete','rote beete','kürbis','mais','erbsen','bohnen grün',
+        'spargel','fenchel','kohlrabi','rosenkohl','grünkohl','weißkohl','rotkohl',
+        'chinakohl','pak choi','staudensellerie','pastinake','rote zwiebel',
+        'schalotte','schalotten','knollensellerie','endivie','mangold','artischocke',
+        'granatapfel','feige','feigen','dattel','datteln','clementine','clementinen',
+        'mandarine','mandarinen','grapefruit','pomelo','papaya','maracuja','litschi',
+        'physalis','sprossen','keimlinge','kresse','olive','oliven','zitronengras',
+      ],
+      'Tiefkühl': [
+        'tiefkühl','tiefkühlpizza','tiefkühlgemüse','tiefkühlkost','tiefkühlbeeren',
+        'tiefgefroren','tk-beeren','tk-obst','tk-gemüse','tk-fisch','tk-spinat',
+        'pommes','eis','eiscreme','sorbet',
+        'rahmspinat','blätterteig','beerenmischung','baguette tk',
+        'frühlingsrollen','chicken nuggets','gemüsemischung','kräuterbutter',
+        'eis am stiel','magnum','cornetto','edamame','schlemmerfilet tk',
+        'spinat tk','erbsen tk',
       ],
     };
 
     for (const [category, keywords] of Object.entries(categories)) {
       for (const keyword of keywords) {
-        if (clean.includes(keyword) || name.includes(keyword)) return category;
+        if (this._matchesKeyword(clean, keyword) || this._matchesKeyword(name, keyword)) return category;
       }
     }
     return 'Sonstiges';
@@ -427,8 +510,8 @@ class ShoppingListCard extends HTMLElement {
 
   _groupByCategory(items) {
     const order = [
-      'Obst & Gemüse','Molkerei','Backwaren','Fleisch & Fisch',
-      'Getränke','Tiefkühl','Vorrat','Haushalt','Sonstiges',
+      'Fleisch & Fisch','Molkerei','Backwaren','Getränke',
+      'Haushalt','Vorrat','Obst & Gemüse','Tiefkühl','Sonstiges',
     ];
     const grouped = {};
     order.forEach(cat => { grouped[cat] = []; });
@@ -442,13 +525,19 @@ class ShoppingListCard extends HTMLElement {
     return grouped;
   }
 
-  async _addItem(name) {
+  async _addItem(name, qty, unit) {
     if (!name.trim()) return;
+    const description = (qty && String(qty).trim() && unit && unit !== '–')
+      ? `${qty} ${unit}`
+      : '';
     await this._hass.callService('todo', 'add_item', {
       entity_id: this._entity,
       item: name.trim(),
+      ...(description ? { description } : {}),
     });
     this._inputValue = '';
+    this._qtyValue = '';
+    this._unitValue = '–';
     this._fetchItems();
   }
 
@@ -477,6 +566,87 @@ class ShoppingListCard extends HTMLElement {
     this._fetchItems();
   }
 
+  _parseDescription(desc) {
+    if (!desc) return { qty: '', unit: '–' };
+    const known = ['Stk','g','kg','ml','l','Pkg'];
+    const parts = desc.trim().split(/\s+/);
+    if (parts.length >= 2 && known.includes(parts[parts.length - 1])) {
+      return { qty: parts.slice(0, -1).join(' '), unit: parts[parts.length - 1] };
+    }
+    return { qty: desc, unit: '–' };
+  }
+
+  _startEdit(uid, desc) {
+    const { qty, unit } = this._parseDescription(desc);
+    this._editingUid = uid;
+    this._editQty = qty;
+    this._editUnit = unit;
+    this._render();
+  }
+
+  async _saveEdit(uid) {
+    const qty = this._editQty;
+    const unit = this._editUnit;
+    const description = (qty && String(qty).trim() && unit && unit !== '–')
+      ? `${qty} ${unit}`
+      : '';
+    await this._hass.callService('todo', 'update_item', {
+      entity_id: this._entity,
+      item: uid,
+      description,
+    });
+    this._editingUid = null;
+    this._editQty = '';
+    this._editUnit = '–';
+    this._fetchItems();
+  }
+
+  _cancelEdit() {
+    this._editingUid = null;
+    this._editQty = '';
+    this._editUnit = '–';
+    this._render();
+  }
+
+  _renderItem(item, isDone) {
+    const action = isDone ? 'uncomplete' : 'complete';
+    const checkClass = isDone ? 'item-check done-check' : 'item-check';
+    const nameClass  = isDone ? 'item-name done-name'   : 'item-name';
+    const checkContent = isDone ? '✓' : '';
+    const checkEl = `<div class="${checkClass}" data-uid="${item.uid}" data-action="${action}">${checkContent}</div>`;
+    const nameEl  = `<span class="${nameClass}">${item.summary}</span>`;
+
+    if (this._editingUid === item.uid) {
+      const units = ['–','Stk','g','kg','ml','l','Pkg'];
+      const unitOpts = units.map(u =>
+        `<option value="${u}" ${u === this._editUnit ? 'selected' : ''}>${u}</option>`
+      ).join('');
+      return `
+        <div class="item${isDone ? ' done-item' : ''}">
+          ${checkEl}
+          ${nameEl}
+          <input class="edit-qty input-qty" data-uid="${item.uid}" type="number" min="0.1" step="0.5" value="${this._editQty}" placeholder="Menge" />
+          <select class="edit-unit input-unit" data-uid="${item.uid}">${unitOpts}</select>
+          <button class="edit-save" data-uid="${item.uid}">✓</button>
+          <button class="edit-cancel">✗</button>
+        </div>
+      `;
+    }
+
+    const badge = item.description
+      ? `<span class="qty-badge">${item.description}</span>`
+      : '';
+    const desc = (item.description || '').replace(/"/g, '&quot;');
+    return `
+      <div class="item${isDone ? ' done-item' : ''}">
+        ${checkEl}
+        ${nameEl}
+        ${badge}
+        <button class="edit-pen" data-uid="${item.uid}" data-desc="${desc}" title="Menge bearbeiten">✏</button>
+      </div>
+    `;
+  }
+
   _render() {
     if (!this.shadowRoot) return;
 
@@ -484,6 +654,11 @@ class ShoppingListCard extends HTMLElement {
     const activeItems = this._items.filter(i => i.status === 'needs_action');
     const doneItems   = this._items.filter(i => i.status === 'completed');
     const totalActive = activeItems.length;
+
+    const units = ['–','Stk','g','kg','ml','l','Pkg'];
+    const unitOptions = units.map(u =>
+      `<option value="${u}" ${u === this._unitValue ? 'selected' : ''}>${u}</option>`
+    ).join('');
 
     let categoriesHTML = '';
     for (const [category, items] of Object.entries(grouped)) {
@@ -497,12 +672,7 @@ class ShoppingListCard extends HTMLElement {
             <span class="cat-count">${items.length}</span>
           </div>
           <div class="category-items" style="border-color:${color}">
-            ${items.map(item => `
-              <div class="item">
-                <div class="item-check" data-uid="${item.uid}" data-action="complete"></div>
-                <span class="item-name">${item.summary}</span>
-              </div>
-            `).join('')}
+            ${items.map(item => this._renderItem(item, false)).join('')}
           </div>
         </div>
       `;
@@ -517,12 +687,7 @@ class ShoppingListCard extends HTMLElement {
             <button class="delete-btn" id="deleteCompleted">🗑 Löschen</button>
           </div>
           <div class="done-items">
-            ${doneItems.map(item => `
-              <div class="item done-item">
-                <div class="item-check done-check" data-uid="${item.uid}" data-action="uncomplete">✓</div>
-                <span class="item-name done-name">${item.summary}</span>
-              </div>
-            `).join('')}
+            ${doneItems.map(item => this._renderItem(item, true)).join('')}
           </div>
         </div>
       `;
@@ -531,30 +696,34 @@ class ShoppingListCard extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>
         :host { display: block; }
-        /* Basis-Layout – gilt für alle Themes */
         ha-card { font-family: var(--primary-font-family, sans-serif); }
         .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
         .title { font-size:15px; font-weight:600; }
         .total { font-size:11px; border-radius:20px; padding:2px 10px; }
-        .input-row { display:flex; gap:8px; margin-bottom:14px; }
-        .input-field { flex:1; border-radius:12px; padding:9px 13px; font-size:13px; outline:none; transition:border-color 0.2s; }
-        .add-btn { border-radius:12px; padding:9px 16px; cursor:pointer; font-size:20px; line-height:1; transition:all 0.2s; }
+        .input-row { display:flex; gap:6px; margin-bottom:14px; align-items:center; }
+        .input-field { flex:1; min-width:0; border-radius:12px; padding:9px 13px; font-size:13px; outline:none; transition:border-color 0.2s; }
+        .input-qty { width:58px; flex-shrink:0; border-radius:12px; padding:9px 8px; font-size:13px; outline:none; text-align:center; transition:border-color 0.2s; }
+        .input-unit { flex-shrink:0; border-radius:12px; padding:9px 6px; font-size:12px; outline:none; cursor:pointer; transition:border-color 0.2s; }
+        .add-btn { flex-shrink:0; border-radius:12px; padding:9px 14px; cursor:pointer; font-size:20px; line-height:1; transition:all 0.2s; }
         .category { margin-bottom:10px; }
         .category-header { display:flex; align-items:center; gap:6px; padding:0 4px; margin-bottom:5px; }
         .cat-icon { font-size:13px; }
         .cat-name { flex:1; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.6px; }
         .cat-count { font-size:10px; border-radius:10px; padding:1px 7px; }
-        .item { display:flex; align-items:center; gap:12px; padding:10px 14px; border-bottom-width:1px; border-bottom-style:solid; transition:background 0.15s; }
+        .item { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom-width:1px; border-bottom-style:solid; transition:background 0.15s; }
         .item:last-child { border-bottom:none; }
         .item-check { width:20px; height:20px; border-radius:50%; cursor:pointer; flex-shrink:0; transition:all 0.2s; display:flex; align-items:center; justify-content:center; font-size:11px; }
-        .item-name { font-size:13px; flex:1; }
+        .item-name { font-size:13px; flex:1; min-width:0; }
+        .qty-badge { font-size:10px; padding:2px 8px; border-radius:10px; white-space:nowrap; flex-shrink:0; }
         .done-section { margin-top:14px; padding-top:12px; border-top-width:1px; border-top-style:solid; }
         .done-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding:0 4px; }
         .done-title { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
         .delete-btn { border-radius:10px; font-size:11px; padding:4px 10px; cursor:pointer; transition:background 0.2s; }
         .done-item { opacity:0.55; }
         .loading, .empty { text-align:center; font-size:13px; padding:24px; }
-
+        .edit-pen { background:none; border:none; cursor:pointer; font-size:12px; padding:2px 4px; flex-shrink:0; opacity:0.35; transition:opacity 0.2s; line-height:1; }
+        .edit-pen:hover { opacity:1; }
+        .edit-save, .edit-cancel { border-radius:8px; padding:3px 8px; cursor:pointer; font-size:13px; flex-shrink:0; font-weight:600; transition:all 0.2s; }
         /* Theme-spezifisches CSS */
         ${this._getThemeCSS()}
       </style>
@@ -565,6 +734,8 @@ class ShoppingListCard extends HTMLElement {
         </div>
         <div class="input-row">
           <input class="input-field" id="newItem" placeholder="Artikel hinzufügen..." value="${this._inputValue}" />
+          <input class="input-qty" id="newQty" type="number" min="0.1" step="0.5" placeholder="Menge" value="${this._qtyValue}" />
+          <select class="input-unit" id="newUnit">${unitOptions}</select>
           <button class="add-btn" id="addBtn">+</button>
         </div>
         ${this._loading ? '<div class="loading">Lade Liste...</div>' : ''}
@@ -574,13 +745,20 @@ class ShoppingListCard extends HTMLElement {
       </ha-card>
     `;
 
-    const input  = this.shadowRoot.getElementById('newItem');
-    const addBtn = this.shadowRoot.getElementById('addBtn');
-    if (addBtn) addBtn.addEventListener('click', () => this._addItem(input.value));
+    const input     = this.shadowRoot.getElementById('newItem');
+    const qtyInput  = this.shadowRoot.getElementById('newQty');
+    const unitSelect = this.shadowRoot.getElementById('newUnit');
+    const addBtn    = this.shadowRoot.getElementById('addBtn');
+
+    const doAdd = () => this._addItem(input.value, qtyInput.value, unitSelect.value);
+
+    if (addBtn)   addBtn.addEventListener('click', doAdd);
     if (input) {
-      input.addEventListener('keydown', e => { if (e.key === 'Enter') this._addItem(input.value); });
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') doAdd(); });
       input.addEventListener('input',   e => { this._inputValue = e.target.value; });
     }
+    if (qtyInput)   qtyInput.addEventListener('input',    e => { this._qtyValue   = e.target.value; });
+    if (unitSelect) unitSelect.addEventListener('change', e => { this._unitValue  = e.target.value; });
 
     const deleteBtn = this.shadowRoot.getElementById('deleteCompleted');
     if (deleteBtn) deleteBtn.addEventListener('click', () => this._deleteCompleted());
@@ -590,6 +768,22 @@ class ShoppingListCard extends HTMLElement {
         if (el.dataset.action === 'complete') this._completeItem(el.dataset.uid);
         else this._uncompleteItem(el.dataset.uid);
       });
+    });
+
+    this.shadowRoot.querySelectorAll('.edit-pen').forEach(btn => {
+      btn.addEventListener('click', () => this._startEdit(btn.dataset.uid, btn.dataset.desc));
+    });
+    this.shadowRoot.querySelectorAll('.edit-save').forEach(btn => {
+      btn.addEventListener('click', () => this._saveEdit(btn.dataset.uid));
+    });
+    this.shadowRoot.querySelectorAll('.edit-cancel').forEach(btn => {
+      btn.addEventListener('click', () => this._cancelEdit());
+    });
+    this.shadowRoot.querySelectorAll('.edit-qty').forEach(input => {
+      input.addEventListener('input', e => { this._editQty = e.target.value; });
+    });
+    this.shadowRoot.querySelectorAll('.edit-unit').forEach(sel => {
+      sel.addEventListener('change', e => { this._editUnit = e.target.value; });
     });
   }
 
@@ -748,7 +942,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type:        'shopping-list-card',
   name:        'Shopping List Card',
-  description: 'Einkaufsliste mit automatischer Kategorie-Sortierung – 4 Themes',
+  description: 'Einkaufsliste mit Mengenangaben und automatischer Kategorie-Sortierung – 4 Themes',
   preview:     true,
   documentationURL: 'https://github.com/pquandel2-alt/Shoping-list-card-',
 });
